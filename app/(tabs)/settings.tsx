@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, Switch, Pressable, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../../src/theme/ThemeContext';
@@ -12,6 +12,9 @@ export default function SettingsScreen() {
   const { colors, isDark } = useTheme();
   const { settings, updateSettings } = useSettings();
   const [editingTimeIndex, setEditingTimeIndex] = useState<number | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollOffset = useRef(0);
+  const timeRowRefs = useRef<(View | null)[]>([]);
 
   const handleThemeChange = useCallback((mode: ThemeMode) => {
     updateSettings({ themeMode: mode });
@@ -164,14 +167,19 @@ export default function SettingsScreen() {
       marginTop: spacing.xs,
       paddingHorizontal: spacing.xs,
     },
-    pickerBackdrop: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+    doneButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: spacing.sm + 2,
+      alignItems: 'center',
+      marginTop: spacing.xs,
+      marginBottom: spacing.sm,
     },
-  }), [colors]);
+    doneText: {
+      ...typography.label,
+      color: isDark ? colors.background : colors.white,
+    },
+  }), [colors, isDark]);
 
   function formatTime(time: string): string {
     const [hh, mm] = time.split(':');
@@ -195,7 +203,13 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      ref={scrollRef}
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      onScroll={(e) => { scrollOffset.current = e.nativeEvent.contentOffset.y; }}
+      scrollEventThrottle={16}
+    >
       {/* Appearance */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>APPEARANCE</Text>
@@ -264,14 +278,26 @@ export default function SettingsScreen() {
           {settings.reminderTimes.slice(0, settings.reminderCount).map((time, i) => (
             <React.Fragment key={i}>
               <Pressable
+                ref={(ref) => { timeRowRefs.current[i] = ref as unknown as View; }}
                 style={styles.timeRow}
-                onPress={() => setEditingTimeIndex(editingTimeIndex === i ? null : i)}
+                onPress={() => {
+                  const opening = editingTimeIndex !== i;
+                  setEditingTimeIndex(opening ? i : null);
+                  if (opening) {
+                    setTimeout(() => {
+                      timeRowRefs.current[i]?.measure((_x, _y, _w, _h, _px, pageY) => {
+                        const contentY = pageY + scrollOffset.current;
+                        scrollRef.current?.scrollTo({ y: contentY - spacing.xxl * 2, animated: true });
+                      });
+                    }, 100);
+                  }
+                }}
               >
                 <Text style={styles.timeLabel}>Reminder {i + 1}</Text>
                 <Text style={styles.timeValue}>{formatTime(time)}</Text>
               </Pressable>
               {editingTimeIndex === i && (
-                <>
+                <View>
                   <DateTimePicker
                     value={timeToDate(settings.reminderTimes[i] ?? '12:00')}
                     mode="time"
@@ -280,11 +306,11 @@ export default function SettingsScreen() {
                     themeVariant={isDark ? 'dark' : 'light'}
                   />
                   {Platform.OS === 'ios' && (
-                    <Pressable style={styles.row} onPress={dismissPicker}>
-                      <Text style={[styles.rowLabel, { color: colors.accent }]}>Done</Text>
+                    <Pressable style={styles.doneButton} onPress={dismissPicker}>
+                      <Text style={styles.doneText}>Done</Text>
                     </Pressable>
                   )}
-                </>
+                </View>
               )}
             </React.Fragment>
           ))}
