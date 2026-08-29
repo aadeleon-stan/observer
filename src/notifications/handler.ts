@@ -15,7 +15,7 @@ export function setupNotificationHandler() {
 
   // Handle notification taps — navigate to write screen
   const subscription = Notifications.addNotificationResponseReceivedListener(() => {
-    router.navigate('/');
+    router.navigate('/(tabs)');
   });
 
   return () => subscription.remove();
