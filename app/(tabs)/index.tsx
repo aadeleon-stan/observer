@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Pressable, Text, StyleSheet, KeyboardAvoidingView, Keyboard, Platform, Alert } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Prompt } from '../../src/components/Prompt';
@@ -8,11 +8,14 @@ import { useDailyGoal } from '../../src/hooks/useDailyGoal';
 import { createEntry } from '../../src/db/entries';
 import { categorize } from '../../src/types/entry';
 import { PROMPT_TEXT } from '../../src/constants/prompts';
-import { colors } from '../../src/theme/colors';
+import { useTheme } from '../../src/theme/ThemeContext';
+import { useSettings } from '../../src/settings/SettingsContext';
 import { typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 
 export default function WriteScreen() {
+  const { colors } = useTheme();
+  const { settings } = useSettings();
   const db = useSQLiteContext();
   const { hasWrittenToday, recheckGoal } = useDailyGoal();
   const [text, setText] = useState('');
@@ -33,7 +36,12 @@ export default function WriteScreen() {
       await recheckGoal();
       try {
         const { rescheduleNotifications } = await import('../../src/notifications/scheduler');
-        await rescheduleNotifications(true);
+        await rescheduleNotifications({
+          enabled: settings.remindersEnabled,
+          times: settings.reminderTimes,
+          jitter: settings.jitterEnabled,
+          suppressToday: settings.suppressAfterWrite,
+        });
       } catch {
         // Notifications not available in Expo Go
       }
@@ -42,7 +50,43 @@ export default function WriteScreen() {
     } finally {
       setSaving(false);
     }
-  }, [canSave, text, db, recheckGoal]);
+  }, [canSave, text, db, recheckGoal, settings]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    bottomBar: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      paddingBottom: spacing.lg,
+    },
+    doneText: {
+      ...typography.caption,
+      color: colors.success,
+    },
+    saveButton: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm + 2,
+      borderRadius: 8,
+      marginLeft: 'auto',
+    },
+    saveButtonDisabled: {
+      backgroundColor: colors.surfaceMuted,
+    },
+    saveText: {
+      ...typography.label,
+      color: colors.white,
+    },
+    saveTextDisabled: {
+      color: colors.textMuted,
+    },
+  }), [colors]);
 
   return (
     <KeyboardAvoidingView
@@ -72,39 +116,3 @@ export default function WriteScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  bottomBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  doneText: {
-    ...typography.caption,
-    color: colors.success,
-  },
-  saveButton: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: 8,
-    marginLeft: 'auto',
-  },
-  saveButtonDisabled: {
-    backgroundColor: colors.surfaceMuted,
-  },
-  saveText: {
-    ...typography.label,
-    color: colors.white,
-  },
-  saveTextDisabled: {
-    color: colors.textMuted,
-  },
-});

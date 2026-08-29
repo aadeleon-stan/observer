@@ -1,8 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
-import { colors } from '../../src/theme/colors';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
@@ -35,6 +37,15 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Text style={{ color, fontSize: 20 }}>☰</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ color, fontSize: 20 }}>⊙</Text>
           ),
         }}
       />

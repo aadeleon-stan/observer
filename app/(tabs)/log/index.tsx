@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useAllEntries } from '../../../src/hooks/useEntries';
 import { EntryCard } from '../../../src/components/EntryCard';
 import { DayGroup } from '../../../src/components/DayGroup';
-import { colors } from '../../../src/theme/colors';
+import { useTheme } from '../../../src/theme/ThemeContext';
 import { typography } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
 import type { Entry } from '../../../src/types/entry';
@@ -15,9 +15,31 @@ interface Section {
 }
 
 export default function LogScreen() {
+  const { colors } = useTheme();
   const { entries, loading } = useAllEntries();
 
   const sections = useMemo(() => groupByDate(entries), [entries]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    list: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.xxl,
+    },
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    empty: {
+      ...typography.caption,
+      color: colors.textMuted,
+    },
+  }), [colors]);
 
   if (loading) {
     return (
@@ -62,24 +84,3 @@ function groupByDate(entries: Entry[]): Section[] {
   }
   return Array.from(map.entries()).map(([date, data]) => ({ date, data }));
 }
-
-const styles = StyleSheet.create({
-  list: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  empty: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-});

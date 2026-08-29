@@ -1,7 +1,12 @@
 import { useEffect } from 'react';
+import { useSettings } from '../settings/SettingsContext';
 
 export function useNotificationSetup() {
+  const { settings, loaded } = useSettings();
+
   useEffect(() => {
+    if (!loaded) return;
+
     let cleanup: (() => void) | undefined;
 
     (async () => {
@@ -14,7 +19,12 @@ export function useNotificationSetup() {
 
         const granted = await requestNotificationPermissions();
         if (granted) {
-          await rescheduleNotifications(false);
+          await rescheduleNotifications({
+            enabled: settings.remindersEnabled,
+            times: settings.reminderTimes,
+            jitter: settings.jitterEnabled,
+            suppressToday: false,
+          });
         }
       } catch {
         // Notifications not available (e.g. Expo Go) — silently skip
@@ -22,5 +32,5 @@ export function useNotificationSetup() {
     })();
 
     return () => cleanup?.();
-  }, []);
+  }, [loaded, settings.remindersEnabled, settings.reminderTimes, settings.jitterEnabled]);
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Pressable,
@@ -14,11 +14,12 @@ import { EntryInput } from '../../src/components/EntryInput';
 import { CategoryBadge } from '../../src/components/CategoryBadge';
 import { useEntry } from '../../src/hooks/useEntries';
 import { categorize } from '../../src/types/entry';
-import { colors } from '../../src/theme/colors';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 
 export default function EntryScreen() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { entry, loading, update, remove } = useEntry(id ?? '');
   const [text, setText] = useState('');
@@ -57,6 +58,86 @@ export default function EntryScreen() {
       },
     ]);
   }, [remove]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      padding: spacing.lg,
+    },
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    notFound: {
+      ...typography.caption,
+      color: colors.textMuted,
+    },
+    meta: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.lg,
+    },
+    date: {
+      ...typography.caption,
+      color: colors.textSecondary,
+    },
+    body: {
+      ...typography.body,
+      color: colors.text,
+      flex: 1,
+    },
+    actions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: spacing.sm,
+      paddingVertical: spacing.md,
+    },
+    editButton: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm + 2,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    editText: {
+      ...typography.label,
+      color: colors.accent,
+    },
+    deleteButton: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm + 2,
+      borderRadius: 8,
+    },
+    deleteText: {
+      ...typography.label,
+      color: colors.textMuted,
+    },
+    cancelButton: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm + 2,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cancelText: {
+      ...typography.label,
+      color: colors.textSecondary,
+    },
+    saveButton: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm + 2,
+      borderRadius: 8,
+    },
+    saveText: {
+      ...typography.label,
+      color: colors.white,
+    },
+  }), [colors]);
 
   if (loading) {
     return (
@@ -120,82 +201,3 @@ export default function EntryScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  notFound: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  meta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  date: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  body: {
-    ...typography.body,
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  editButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  editText: {
-    ...typography.label,
-    color: colors.accent,
-  },
-  deleteButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: 8,
-  },
-  deleteText: {
-    ...typography.label,
-    color: colors.textMuted,
-  },
-  cancelButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelText: {
-    ...typography.label,
-    color: colors.textSecondary,
-  },
-  saveButton: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: 8,
-  },
-  saveText: {
-    ...typography.label,
-    color: colors.white,
-  },
-});

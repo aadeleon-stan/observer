@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TextInput, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import { categorize } from '../types/entry';
@@ -12,8 +12,39 @@ interface Props {
 }
 
 export function EntryInput({ value, onChangeText, autoFocus = false }: Props) {
+  const { colors } = useTheme();
   const category = categorize(value);
   const charCount = value.length;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: spacing.lg,
+    },
+    input: {
+      ...typography.body,
+      color: colors.text,
+      flex: 1,
+      paddingTop: 0,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing.sm,
+    },
+    category: {
+      ...typography.label,
+      color: colors.observation,
+    },
+    reflection: {
+      color: colors.reflection,
+    },
+    count: {
+      ...typography.caption,
+      color: colors.textMuted,
+    },
+  }), [colors]);
 
   return (
     <View style={styles.container}>
@@ -36,32 +67,3 @@ export function EntryInput({ value, onChangeText, autoFocus = false }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-  },
-  input: {
-    ...typography.body,
-    flex: 1,
-    paddingTop: 0,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  category: {
-    ...typography.label,
-    color: colors.observation,
-  },
-  reflection: {
-    color: colors.reflection,
-  },
-  count: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-});

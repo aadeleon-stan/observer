@@ -1,17 +1,19 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { DatabaseProvider } from '../src/db/provider';
+import { SettingsProvider } from '../src/settings/SettingsContext';
+import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 import { useNotificationSetup } from '../src/hooks/useNotificationSetup';
-import { colors } from '../src/theme/colors';
 
 export { ErrorBoundary } from 'expo-router';
 
-export default function RootLayout() {
+function RootInner() {
+  const { colors, isDark } = useTheme();
   useNotificationSetup();
 
   return (
-    <DatabaseProvider>
-      <StatusBar style="dark" />
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -31,6 +33,18 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </DatabaseProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <SettingsProvider>
+      <ThemeProvider>
+        <DatabaseProvider>
+          <RootInner />
+        </DatabaseProvider>
+      </ThemeProvider>
+    </SettingsProvider>
   );
 }

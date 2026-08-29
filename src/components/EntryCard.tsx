@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, Pressable, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import { CategoryBadge } from './CategoryBadge';
@@ -12,11 +12,30 @@ interface Props {
 }
 
 export function EntryCard({ entry, onPress }: Props) {
+  const { colors } = useTheme();
   const time = new Date(entry.created_at).toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',
   });
   const preview = entry.body.length > 120 ? entry.body.slice(0, 120) + '...' : entry.body;
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      gap: spacing.sm,
+    },
+    preview: {
+      ...typography.body,
+      color: colors.text,
+    },
+    time: {
+      ...typography.caption,
+      color: colors.textMuted,
+    },
+  }), [colors]);
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
@@ -26,21 +45,3 @@ export function EntryCard({ entry, onPress }: Props) {
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  preview: {
-    ...typography.body,
-    color: colors.text,
-  },
-  time: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-});
