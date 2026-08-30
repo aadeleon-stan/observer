@@ -49,6 +49,12 @@
 - Use `npx expo install` (not `npm install`) for packages that need native modules (e.g. AsyncStorage, datetimepicker)
 - Tab icons use plain Unicode text glyphs — avoid emoji characters that render with color/3D texture
 
+## Welcome Animation
+- Write tab opens with a welcome animation: prompt fades in centered, holds ~2.2s, slides up to resting position, then overlay dissolves revealing the full UI
+- Implemented via a full-screen opaque `Modal` overlay containing a duplicate `<Prompt>` positioned to match the inline layout (`headerHeight` spacer = `insets.top + 44`). When the overlay dissolves, the identical inline Prompt is revealed seamlessly underneath.
+- `useRef` guard (`hasAnimated`) prevents replay on tab switches; animation replays on fresh app open
+- Do NOT use `navigation.setOptions` to hide/show header or tab bar — it causes layout jumps and chrome that "pops" in. The Modal overlay approach avoids manipulating navigation chrome entirely.
+
 ## Conventions
 - Use `npm install --legacy-peer-deps` for dependency installs (peer dep conflicts with reanimated)
 - Animations use React Native's built-in `Animated` API, not reanimated

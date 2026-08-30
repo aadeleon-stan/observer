@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, Pressable, Text, StyleSheet, KeyboardAvoidingView, Keyboard, Platform, Alert } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { View, Pressable, Text, StyleSheet, KeyboardAvoidingView, Keyboard, Platform, Alert, Animated, Easing, Dimensions, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Prompt } from '../../src/components/Prompt';
 import { EntryInput } from '../../src/components/EntryInput';
@@ -13,14 +14,82 @@ import { useSettings } from '../../src/settings/SettingsContext';
 import { typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 
+const NAV_BAR_HEIGHT = 44;
+
 export default function WriteScreen() {
   const { colors } = useTheme();
   const { settings } = useSettings();
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
   const { hasWrittenToday, recheckGoal } = useDailyGoal();
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+
+  // Welcome animation
+  const hasAnimated = useRef(false);
+  const promptOpacity = useRef(new Animated.Value(0)).current;
+  const promptTranslateY = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(1)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const [animationDone, setAnimationDone] = useState(false);
+
+  // Header height = status bar + nav bar. This is how far down the prompt sits
+  // in the real layout, so we match it in the Modal for a seamless cross-fade.
+  const headerHeight = insets.top + NAV_BAR_HEIGHT;
+
+  const centerOffset = useMemo(() => {
+    const { height } = Dimensions.get('window');
+    // Move prompt from its resting position (below header) to screen center.
+    // 60 ≈ half the Prompt component height (paddingTop 48 + one line of text).
+    return (height / 2) - headerHeight - 60;
+  }, [headerHeight]);
+
+  useEffect(() => {
+    if (hasAnimated.current) return;
+    hasAnimated.current = true;
+
+    promptTranslateY.setValue(centerOffset);
+
+    const easing = Easing.inOut(Easing.quad);
+
+    Animated.sequence([
+      // 1. Fade in prompt at center of screen
+      Animated.timing(promptOpacity, {
+        toValue: 1,
+        duration: 600,
+        easing,
+        useNativeDriver: true,
+      }),
+      // 2. Hold in stillness
+      Animated.delay(2200),
+      // 3. Slide prompt up to its resting position
+      Animated.timing(promptTranslateY, {
+        toValue: 0,
+        duration: 900,
+        easing,
+        useNativeDriver: true,
+      }),
+      // 4. Dissolve overlay + fade in content together
+      Animated.delay(200),
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 800,
+          easing,
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 800,
+          easing,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      setAnimationDone(true);
+    });
+  }, []);
 
   const canSave = text.trim().length > 0 && !saving;
 
@@ -86,33 +155,68 @@ export default function WriteScreen() {
     saveTextDisabled: {
       color: colors.textMuted,
     },
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
   }), [colors]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={100}
-    >
-      <Prompt text={PROMPT_TEXT} />
-      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-        <EntryInput value={text} onChangeText={setText} />
-      </Pressable>
-      <View style={styles.bottomBar}>
-        {hasWrittenToday && (
-          <Text style={styles.doneText}>You've written today</Text>
-        )}
-        <Pressable
-          style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={!canSave}
+    <>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={100}
+      >
+        {/* Inline prompt — always rendered, visible under the Modal overlay */}
+        <Prompt text={PROMPT_TEXT} />
+        <Animated.View
+          style={{ flex: 1, opacity: contentOpacity }}
+          pointerEvents={animationDone ? 'auto' : 'none'}
         >
-          <Text style={[styles.saveText, !canSave && styles.saveTextDisabled]}>
-            Save
-          </Text>
-        </Pressable>
-      </View>
-      <SaveConfirmation visible={showSaved} onDone={() => setShowSaved(false)} />
-    </KeyboardAvoidingView>
+          <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+            <EntryInput value={text} onChangeText={setText} />
+          </Pressable>
+        </Animated.View>
+        <Animated.View
+          style={[styles.bottomBar, { opacity: contentOpacity }]}
+          pointerEvents={animationDone ? 'auto' : 'none'}
+        >
+          {hasWrittenToday && (
+            <Text style={styles.doneText}>You've written today</Text>
+          )}
+          <Pressable
+            style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={!canSave}
+          >
+            <Text style={[styles.saveText, !canSave && styles.saveTextDisabled]}>
+              Save
+            </Text>
+          </Pressable>
+        </Animated.View>
+        <SaveConfirmation visible={showSaved} onDone={() => setShowSaved(false)} />
+      </KeyboardAvoidingView>
+
+      {/* Full-screen opaque overlay with its own Prompt, positioned to match the
+          inline Prompt exactly. Covers header + tabs + content. When it dissolves,
+          the identical inline Prompt is revealed seamlessly underneath. */}
+      {!animationDone && (
+        <Modal visible transparent animationType="none">
+          <Animated.View
+            style={[styles.overlay, { opacity: overlayOpacity }]}
+            pointerEvents="none"
+          >
+            <View style={{ height: headerHeight }} />
+            <Animated.View style={{
+              opacity: promptOpacity,
+              transform: [{ translateY: promptTranslateY }],
+            }}>
+              <Prompt text={PROMPT_TEXT} />
+            </Animated.View>
+          </Animated.View>
+        </Modal>
+      )}
+    </>
   );
 }
