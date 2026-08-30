@@ -177,7 +177,7 @@ export default function SettingsScreen() {
     },
     doneText: {
       ...typography.label,
-      color: isDark ? colors.background : colors.white,
+      color: colors.white,
     },
   }), [colors, isDark]);
 
@@ -243,7 +243,7 @@ export default function SettingsScreen() {
             value={settings.remindersEnabled}
             onValueChange={(v) => updateSettings({ remindersEnabled: v })}
             trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
-            thumbColor={colors.white}
+            thumbColor={colors.text}
           />
         </View>
 
@@ -321,7 +321,7 @@ export default function SettingsScreen() {
               value={settings.jitterEnabled}
               onValueChange={(v) => updateSettings({ jitterEnabled: v })}
               trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
-              thumbColor={colors.white}
+              thumbColor={colors.text}
             />
           </View>
           {settings.jitterEnabled && (
@@ -339,7 +339,7 @@ export default function SettingsScreen() {
             value={settings.suppressAfterWrite}
             onValueChange={(v) => updateSettings({ suppressAfterWrite: v })}
             trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
-            thumbColor={colors.white}
+            thumbColor={colors.text}
           />
         </View>
         {settings.suppressAfterWrite && (

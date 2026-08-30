@@ -27,7 +27,7 @@ export const darkColors = {
   observation: '#C0A888',
   reflection: '#8AA8B0',
   success: '#8AAF7A',
-  white: '#E8E0D8',
+  white: '#1A1614',
 };
 
 /** Legacy alias — use useTheme() in components instead */
