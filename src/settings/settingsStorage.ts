@@ -9,6 +9,7 @@ export interface AppSettings {
   reminderTimes: string[]; // HH:MM strings in local time
   jitterEnabled: boolean;
   suppressAfterWrite: boolean;
+  showStreak: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   reminderTimes: ['09:00', '13:00', '19:00'],
   jitterEnabled: true,
   suppressAfterWrite: true,
+  showStreak: true,
 };
 
 export async function loadSettings(): Promise<AppSettings> {

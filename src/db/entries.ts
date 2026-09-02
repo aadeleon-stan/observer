@@ -66,6 +66,13 @@ export async function hasEntryForDate(db: SQLiteDatabase, localDate: string): Pr
   return (row?.count ?? 0) > 0;
 }
 
+export async function getDistinctWrittenDates(db: SQLiteDatabase): Promise<string[]> {
+  const rows = await db.getAllAsync<{ d: string }>(
+    `SELECT DISTINCT date(created_at, 'localtime') as d FROM entries WHERE deleted_at IS NULL ORDER BY d DESC`,
+  );
+  return rows.map((r) => r.d);
+}
+
 function generateId(): string {
   const bytes = new Uint8Array(16);
   for (let i = 0; i < 16; i++) {

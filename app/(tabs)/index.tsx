@@ -6,6 +6,7 @@ import { Prompt } from '../../src/components/Prompt';
 import { EntryInput } from '../../src/components/EntryInput';
 import { SaveConfirmation } from '../../src/components/SaveConfirmation';
 import { useDailyGoal } from '../../src/hooks/useDailyGoal';
+import { useStreak } from '../../src/hooks/useStreak';
 import { createEntry } from '../../src/db/entries';
 import { categorize } from '../../src/types/entry';
 import { PROMPT_TEXT } from '../../src/constants/prompts';
@@ -22,6 +23,7 @@ export default function WriteScreen() {
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
   const { hasWrittenToday, recheckGoal } = useDailyGoal();
+  const { streak, recheckStreak } = useStreak();
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -103,6 +105,7 @@ export default function WriteScreen() {
       Keyboard.dismiss();
       setShowSaved(true);
       await recheckGoal();
+      await recheckStreak();
       try {
         const { rescheduleNotifications } = await import('../../src/notifications/scheduler');
         await rescheduleNotifications({
@@ -119,7 +122,7 @@ export default function WriteScreen() {
     } finally {
       setSaving(false);
     }
-  }, [canSave, text, db, recheckGoal, settings]);
+  }, [canSave, text, db, recheckGoal, recheckStreak, settings]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -183,7 +186,11 @@ export default function WriteScreen() {
           pointerEvents={animationDone ? 'auto' : 'none'}
         >
           {hasWrittenToday && (
-            <Text style={styles.doneText}>You've written today</Text>
+            <Text style={styles.doneText}>
+              {settings.showStreak
+                ? `You've written today (for ${streak} day${streak !== 1 ? 's' : ''})`
+                : "You've written today"}
+            </Text>
           )}
           <Pressable
             style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}

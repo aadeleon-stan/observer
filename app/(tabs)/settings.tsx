@@ -343,8 +343,17 @@ export default function SettingsScreen() {
           />
         </View>
         {settings.suppressAfterWrite && (
-          <Text style={styles.tooltip}>Remaining reminders for the day are cancelled after you save an entry</Text>
+          <Text style={[styles.tooltip, { marginBottom: spacing.sm }]}>Remaining reminders for the day are cancelled after you save an entry</Text>
         )}
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Show writing streak</Text>
+          <Switch
+            value={settings.showStreak}
+            onValueChange={(v) => updateSettings({ showStreak: v })}
+            trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
+            thumbColor={colors.text}
+          />
+        </View>
       </View>
     </ScrollView>
   );
