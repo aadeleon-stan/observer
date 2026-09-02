@@ -116,6 +116,11 @@ export default function EntryScreen() {
       ...typography.label,
       color: colors.textMuted,
     },
+    editedNote: {
+      ...typography.caption,
+      color: colors.textMuted,
+      marginTop: spacing.sm,
+    },
     cancelButton: {
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.sm + 2,
@@ -163,6 +168,16 @@ export default function EntryScreen() {
     minute: '2-digit',
   });
 
+  const wasEdited = entry.updated_at !== entry.created_at;
+  const editedAt = wasEdited
+    ? new Date(entry.updated_at).toLocaleString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null;
+
   if (editing) {
     return (
       <KeyboardAvoidingView
@@ -190,6 +205,9 @@ export default function EntryScreen() {
         <CategoryBadge category={entry.category} />
       </View>
       <Text style={styles.body}>{entry.body}</Text>
+      {editedAt && (
+        <Text style={styles.editedNote}>Last edited {editedAt}</Text>
+      )}
       <View style={styles.actions}>
         <Pressable style={styles.editButton} onPress={() => setEditing(true)}>
           <Text style={styles.editText}>Edit</Text>
