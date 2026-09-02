@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { View, Pressable, Text, StyleSheet, KeyboardAvoidingView, Keyboard, Platform, Alert, Animated, Easing, Dimensions, Modal } from 'react-native';
+import { View, Pressable, Text, StyleSheet, Keyboard, Platform, Alert, Animated, Easing, Dimensions, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Prompt } from '../../src/components/Prompt';
@@ -15,7 +15,6 @@ import { useSettings } from '../../src/settings/SettingsContext';
 import { typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 
-const NAV_BAR_HEIGHT = 44;
 
 export default function WriteScreen() {
   const { colors } = useTheme();
@@ -36,16 +35,43 @@ export default function WriteScreen() {
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const [animationDone, setAnimationDone] = useState(false);
 
-  // Header height = status bar + nav bar. This is how far down the prompt sits
-  // in the real layout, so we match it in the Modal for a seamless cross-fade.
-  const headerHeight = insets.top + NAV_BAR_HEIGHT;
+  // Keyboard-driven bottom padding: accounts for tab bar sitting below this view
+  const TAB_BAR_HEIGHT = 49;
+  const keyboardPadding = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        Animated.timing(keyboardPadding, {
+          toValue: e.endCoordinates.height - TAB_BAR_HEIGHT - insets.bottom,
+          duration: Platform.OS === 'ios' ? e.duration : 250,
+          useNativeDriver: false,
+        }).start();
+      },
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        Animated.timing(keyboardPadding, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? e.duration : 250,
+          useNativeDriver: false,
+        }).start();
+      },
+    );
+    return () => { show.remove(); hide.remove(); };
+  }, [insets.bottom]);
+
+  // Top padding = safe area inset so the prompt sits comfortably below the notch.
+  // The Modal overlay uses the same value to position its duplicate Prompt identically.
+  const topPadding = insets.top;
 
   const centerOffset = useMemo(() => {
     const { height } = Dimensions.get('window');
     // Move prompt from its resting position (below header) to screen center.
     // 60 ≈ half the Prompt component height (paddingTop 48 + one line of text).
-    return (height / 2) - headerHeight - 60;
-  }, [headerHeight]);
+    return (height / 2) - topPadding - 60;
+  }, [topPadding]);
 
   useEffect(() => {
     if (hasAnimated.current) return;
@@ -166,12 +192,9 @@ export default function WriteScreen() {
 
   return (
     <>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={100}
-      >
+      <Animated.View style={[styles.container, { paddingBottom: keyboardPadding }]}>
         {/* Inline prompt — always rendered, visible under the Modal overlay */}
+        <View style={{ height: topPadding }} />
         <Prompt text={PROMPT_TEXT} />
         <Animated.View
           style={{ flex: 1, opacity: contentOpacity }}
@@ -203,7 +226,7 @@ export default function WriteScreen() {
           </Pressable>
         </Animated.View>
         <SaveConfirmation visible={showSaved} onDone={() => setShowSaved(false)} />
-      </KeyboardAvoidingView>
+      </Animated.View>
 
       {/* Full-screen opaque overlay with its own Prompt, positioned to match the
           inline Prompt exactly. Covers header + tabs + content. When it dissolves,
@@ -214,7 +237,7 @@ export default function WriteScreen() {
             style={[styles.overlay, { opacity: overlayOpacity }]}
             pointerEvents="none"
           >
-            <View style={{ height: headerHeight }} />
+            <View style={{ height: topPadding }} />
             <Animated.View style={{
               opacity: promptOpacity,
               transform: [{ translateY: promptTranslateY }],
