@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npx expo export --platform web",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/projects/dwell/app/((?!_expo|assets|manifest\\.json|sw\\.js|favicon\\.png).*)",
+      "destination": "/projects/dwell/app/index.html"
+    }
+  ]
+}

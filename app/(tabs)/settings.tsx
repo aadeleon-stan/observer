@@ -1,7 +1,12 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, Switch, Pressable, StyleSheet, Platform } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../../src/theme/ThemeContext';
+import WebTimePicker from '../../src/components/WebTimePicker';
+
+let DateTimePicker: any = null;
+if (Platform.OS !== 'web') {
+  DateTimePicker = require('@react-native-community/datetimepicker').default;
+}
 import { useSettings } from '../../src/settings/SettingsContext';
 import { typography } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
@@ -298,17 +303,30 @@ export default function SettingsScreen() {
               </Pressable>
               {editingTimeIndex === i && (
                 <View>
-                  <DateTimePicker
-                    value={timeToDate(settings.reminderTimes[i] ?? '12:00')}
-                    mode="time"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={handleTimeChange}
-                    themeVariant={isDark ? 'dark' : 'light'}
-                  />
-                  {Platform.OS === 'ios' && (
-                    <Pressable style={styles.doneButton} onPress={dismissPicker}>
-                      <Text style={styles.doneText}>Done</Text>
-                    </Pressable>
+                  {Platform.OS === 'web' ? (
+                    <WebTimePicker
+                      value={settings.reminderTimes[i] ?? '12:00'}
+                      onChange={(time) => {
+                        const newTimes = [...settings.reminderTimes];
+                        newTimes[i] = time;
+                        updateSettings({ reminderTimes: newTimes });
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <DateTimePicker
+                        value={timeToDate(settings.reminderTimes[i] ?? '12:00')}
+                        mode="time"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        onChange={handleTimeChange}
+                        themeVariant={isDark ? 'dark' : 'light'}
+                      />
+                      {Platform.OS === 'ios' && (
+                        <Pressable style={styles.doneButton} onPress={dismissPicker}>
+                          <Text style={styles.doneText}>Done</Text>
+                        </Pressable>
+                      )}
+                    </>
                   )}
                 </View>
               )}

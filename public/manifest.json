@@ -1,0 +1,16 @@
+{
+  "name": "Dwell",
+  "short_name": "Dwell",
+  "start_url": "/projects/dwell/app",
+  "scope": "/projects/dwell/app",
+  "display": "standalone",
+  "background_color": "#FBF6EF",
+  "theme_color": "#FBF6EF",
+  "icons": [
+    {
+      "src": "/assets/images/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}
