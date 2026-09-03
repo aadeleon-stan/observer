@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npx expo export --platform web",
-  "outputDirectory": "dist",
+  "buildCommand": "npx expo export --platform web && mkdir -p dist-final/projects/dwell/app && cp -r dist/* dist-final/projects/dwell/app/",
+  "outputDirectory": "dist-final",
   "headers": [
     {
       "source": "/(.*)",
@@ -12,7 +12,7 @@
   ],
   "rewrites": [
     {
-      "source": "/projects/dwell/app/((?!_expo|assets|manifest\\.json|sw\\.js|favicon\\.png).*)",
+      "source": "/projects/dwell/app/((?!_expo|assets|manifest\\.json|sw\\.js|favicon\\.ico).*)",
       "destination": "/projects/dwell/app/index.html"
     }
   ]
