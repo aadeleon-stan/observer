@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Observer",
+    "name": "Dwell",
     "slug": "observer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "observer",
+    "scheme": "dwell",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true

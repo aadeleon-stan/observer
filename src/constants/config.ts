@@ -5,5 +5,5 @@ export const REFLECTION_THRESHOLD = 250;
 export const NOTIFICATION_HOURS = [9, 13, 19];
 
 /** Notification content */
-export const NOTIFICATION_TITLE = 'Observer';
+export const NOTIFICATION_TITLE = 'Dwell';
 export const NOTIFICATION_BODY = 'A moment to notice.';

@@ -1,4 +1,4 @@
-# Observer - Daily Writing Habit App
+# Dwell - Daily Writing Habit App
 
 ## Tech Stack
 - React Native + Expo (managed workflow, **SDK 54**)
